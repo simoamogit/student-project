@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card shadow">
+    <div class="card-header bg-primary text-white">
+        <h3 class="mb-0"><i class="fas fa-book me-2"></i>Voti</h3>
+    </div>
+    <div class="card-body">
+        {% if not materie %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Nessun voto inserito. 
+            <a href="{{ url_for('aggiungi_voto') }}" class="alert-link">Aggiungine uno dalla sezione Gestione!</a>
+        </div>
+        {% else %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Materia</th>
+                        <th>Voti</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for materia, dettagli in materie.items() %}
+                    <tr>
+                        <td class="fw-bold">{{ materia }}</td>
+                        <td>
+                            {% for voto in dettagli.voti %}
+                            <span class="badge bg-primary me-1">{{ voto }}</span>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-lg">
+        <div class="card-header bg-gradient-info text-white">
+            <h3 class="mb-0"><i class="fas fa-cogs me-2"></i>Impostazioni Generali</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="row g-3">
+                    <!-- Quadrimestre -->
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label h5">Quadrimestre</label>
+                            <select class="form-select form-select-lg" name="quadrimestre">
+                                <option value="1" {% if quadrimestre == 1 %}selected{% endif %}>Primo</option>
+                                <option value="2" {% if quadrimestre == 2 %}selected{% endif %}>Secondo</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Anno Scolastico -->
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label h5">Anno Scolastico</label>
+                            <input type="text" 
+                                   class="form-control form-control-lg" 
+                                   name="anno_scolastico" 
+                                   value="{{ anno_scolastico }}" 
+                                   pattern="\d{4}/\d{4}" 
+                                   title="Formato: AAAA/AAAA (es. 2023/2024)">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save me-2"></i>Salva Modifiche
+                    </button>
+                    <a href="{{ url_for('home') }}" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-home me-2"></i>Torna alla Home
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card shadow">
+    <div class="card-header bg-primary text-white">
+        <h3><i class="fas fa-user-plus me-2"></i>Aggiungi Professore</h3>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Nome Professore</label>
+                <input type="text" class="form-control" name="professore" required>
+            </div>
+            <button type="submit" class="btn btn-success">Aggiungi</button>
+            <a href="{{ url_for('gestione') }}" class="btn btn-secondary">Annulla</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

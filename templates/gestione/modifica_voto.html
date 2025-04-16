@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-lg">
+        <div class="card-header bg-gradient-primary text-white">
+            <h3 class="mb-0"><i class="fas fa-edit me-2"></i>Modifica Voto</h3>
+        </div>
+        <div class="card-body">
+            {% if not materie %}
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Non ci sono voti da modificare! 
+                <a href="{{ url_for('aggiungi_voto') }}" class="alert-link">Aggiungi prima dei voti</a>
+            </div>
+            {% else %}
+            <form method="POST" class="needs-validation" novalidate>
+                <!-- Selezione Materia -->
+                <div class="mb-4">
+                    <label class="form-label h5">Seleziona Materia</label>
+                    <select class="form-select form-select-lg" name="materia" required>
+                        {% for materia, dettagli in materie.items() %}
+                        <option value="{{ materia }}">{{ materia }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Lista Voti Esistenti -->
+                <div class="mb-4">
+                    <label class="form-label h5">Voti Esistenti</label>
+                    <div class="row g-3">
+                        {% for materia, dettagli in materie.items() %}
+                            {% for voto in dettagli.voti %}
+                                <div class="col-md-4">
+                                    <div class="card vote-card bg-light">
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ materia }}</h5>
+                                            <p class="card-text">
+                                                <span class="badge bg-primary me-2">Indice: {{ loop.index0 }}</span>
+                                                <span class="badge bg-success">Voto: {{ voto }}</span>
+                                            </p>
+                                            <button type="button" class="btn btn-sm btn-warning set-index" 
+                                                    data-materia="{{ materia }}" 
+                                                    data-indice="{{ loop.index0 }}">  <!-- Usa loop.index0 -->
+                                                Seleziona
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+
+                <!-- Form Modifica -->
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Indice Voto</label>
+                        <input type="number" class="form-control" 
+                               id="indiceInput" name="indice" 
+                               required readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nuovo Voto</label>
+                        <input type="number" step="0.25" class="form-control" 
+                               name="nuovo_voto" min="0" max="10" required>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save me-2"></i>Salva Modifiche
+                    </button>
+                    <a href="{{ url_for('voti') }}" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-times me-2"></i>Annulla
+                    </a>
+                </div>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.set-index').forEach(button => {
+    button.addEventListener('click', () => {
+        const materia = button.dataset.materia;
+        const indice = button.dataset.indice;
+        
+        document.querySelector(`select option[value="${materia}"]`).selected = true;
+        document.getElementById('indiceInput').value = indice;
+        
+        document.getElementById('indiceInput').scrollIntoView({
+            behavior: 'smooth'
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0"><i class="fas fa-calculator me-2"></i>Medie</h3>
+            </div>
+            <div class="card-body">
+                {% if not medie %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Inserisci almeno un voto per visualizzare le medie!
+                </div>
+                {% else %}
+                <table class="table">
+                    <tr class="table-primary">
+                        <th>Media Generale</th>
+                        <td class="fw-bold">{{ "%.2f"|format(media_generale) }}</td>
+                    </tr>
+                    {% for materia, media in medie.items() %}
+                    <tr>
+                        <td>{{ materia }}</td>
+                        <td>{{ "%.2f"|format(media) }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-body">
+                {% if not medie %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Il grafico comparirà qui dopo aver inserito almeno un voto!
+                </div>
+                {% else %}
+                <canvas id="graficoMedie"></canvas>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

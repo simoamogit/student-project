@@ -1,0 +1,55 @@
+:root {
+    --primary: #2A2A72;
+    --secondary: #009FFD;
+    --success: #28A745;
+    --danger: #DC3545;
+    --light: #F8F9FA;
+    --dark: #212529;
+}
+
+body {
+    background: linear-gradient(135deg, var(--light) 0%, #e9ecef 100%);
+    min-height: 100vh;
+}
+
+.card {
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.card-header {
+    background: linear-gradient(45deg, var(--primary), var(--secondary));
+    border-radius: 15px 15px 0 0 !important;
+}
+
+.vote-card {
+    transition: none !important;
+}
+
+.vote-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.form-select-lg {
+    font-size: 1.1rem;
+    padding: 0.75rem 1.5rem;
+}
+
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.1rem;
+    border-radius: 10px;
+}
+
+.badge {
+    font-size: 0.9em;
+    padding: 0.6em 1em;
+}
+
+.needs-validation .form-control:invalid,
+.needs-validation .form-control:valid {
+    background-position: right 1.5rem center;
+    padding-right: 3rem;
+}

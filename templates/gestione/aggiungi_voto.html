@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card shadow">
+    <div class="card-header bg-success text-white">
+        <h3><i class="fas fa-plus-circle me-2"></i>Aggiungi Voto</h3>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Materia</label>
+                <select class="form-select" name="materia" required>
+                    {% for materia in materie %}
+                    <option value="{{ materia }}">{{ materia }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Voto (0-10)</label>
+                <input type="number" step="0.25" 
+                       class="form-control" 
+                       name="voto" 
+                       min="0" 
+                       max="10" 
+                       required>
+            </div>
+            
+            <div class="d-grid gap-2 d-md-block">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Salva
+                </button>
+                <a href="{{ url_for('voti') }}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>Annulla
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

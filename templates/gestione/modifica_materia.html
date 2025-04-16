@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card shadow">
+    <div class="card-header bg-warning">
+        <h3><i class="fas fa-edit me-2"></i>Modifica Materia</h3>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Seleziona Materia</label>
+                <select class="form-select" name="vecchio_nome">
+                    {% for materia in materie %}
+                    <option value="{{ materia }}">{{ materia }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Nuovo Nome</label>
+                <input type="text" class="form-control" name="nuovo_nome" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Modifica</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

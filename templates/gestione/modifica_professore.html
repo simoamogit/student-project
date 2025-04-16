@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card shadow">
+    <div class="card-header bg-danger text-white">
+        <h3><i class="fas fa-chalkboard-teacher me-2"></i>Modifica Professore</h3>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Seleziona Professore</label>
+                <select class="form-select" name="vecchio_nome">
+                    {% for prof in professori %}
+                    <option value="{{ prof }}">{{ prof }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Nuovo Nome</label>
+                <input type="text" class="form-control" name="nuovo_nome" required>
+            </div>
+            <button type="submit" class="btn btn-warning">Modifica</button>
+            <a href="{{ url_for('gestione') }}" class="btn btn-secondary">Annulla</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

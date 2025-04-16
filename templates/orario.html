@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card shadow">
+    <div class="card-header bg-info text-white">
+        <h3 class="mb-0"><i class="fas fa-clock me-2"></i>Orario Scolastico</h3>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            {% for giorno in ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"] %}
+            <div class="mb-4 border p-3 rounded">
+                <h5 class="text-primary">{{ giorno }}</h5>
+                {% for i in range(6) %}
+                <input type="text" class="form-control mb-2" 
+                       name="{{ giorno }}_{{ i }}" 
+                       value="{{ orario.get(giorno, [''])[i] if orario else '' }}" 
+                       placeholder="Ora {{ i+1 }}">
+                {% endfor %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-save me-2"></i>Salva
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
