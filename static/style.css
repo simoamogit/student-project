@@ -1,55 +1,57 @@
+/* Colori personalizzati */
 :root {
-    --primary: #2A2A72;
-    --secondary: #009FFD;
-    --success: #28A745;
-    --danger: #DC3545;
-    --light: #F8F9FA;
-    --dark: #212529;
+    --gold: #FFD700;
+    --light-shadow: rgba(0,0,0,0.1);
 }
 
-body {
-    background: linear-gradient(135deg, var(--light) 0%, #e9ecef 100%);
-    min-height: 100vh;
+/* Animazioni */
+.animate__animated {
+    animation-duration: 0.5s;
 }
 
-.card {
-    border: none;
-    border-radius: 15px;
+/* Stile coroncina */
+.bg-gold {
+    background-color: var(--gold) !important;
+    color: #000 !important;
+}
+
+.crown-badge {
+    position: relative;
+    box-shadow: 0 2px 5px var(--light-shadow);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.crown-badge:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px var(--light-shadow);
+}
+
+/* Effetti hover */
+.table-hover tbody tr:hover {
+    transform: scale(1.01);
+    transition: transform 0.2s;
+    background-color: rgba(0, 123, 255, 0.05) !important;
+}
+
+/* Badge animati */
+.badge {
+    transition: all 0.3s ease;
+    position: relative;
     overflow: hidden;
 }
 
-.card-header {
-    background: linear-gradient(45deg, var(--primary), var(--secondary));
-    border-radius: 15px 15px 0 0 !important;
+.badge::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: rgba(255,255,255,0.1);
+    transform: rotate(30deg);
+    transition: all 0.3s;
 }
 
-.vote-card {
-    transition: none !important;
-}
-
-.vote-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-}
-
-.form-select-lg {
-    font-size: 1.1rem;
-    padding: 0.75rem 1.5rem;
-}
-
-.btn-lg {
-    padding: 0.75rem 1.5rem;
-    font-size: 1.1rem;
-    border-radius: 10px;
-}
-
-.badge {
-    font-size: 0.9em;
-    padding: 0.6em 1em;
-}
-
-.needs-validation .form-control:invalid,
-.needs-validation .form-control:valid {
-    background-position: right 1.5rem center;
-    padding-right: 3rem;
+.badge:hover::after {
+    left: 100%;
 }
