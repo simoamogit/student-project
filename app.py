@@ -1,9 +1,13 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+import re
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from pymongo import MongoClient
+from pymongo.errors import PyMongoError
 from dotenv import load_dotenv
 import os
 import json
+from datetime import datetime
 from bson import ObjectId
+from bson.objectid import ObjectId
 
 load_dotenv()
 
@@ -58,7 +62,19 @@ def home():
 @app.route('/voti')
 def voti():
     dati = get_dati()
-    return render_template('voti.html', dati=dati, materie=dati['materie'])
+    voti_formattati = []
+    
+    # Prepara i voti per la visualizzazione
+    for materia, dettagli in dati['materie'].items():
+        for i, voto in enumerate(dettagli['voti']):
+            voti_formattati.append({
+                'materia': materia,
+                'valore': voto,
+                'indice': i,
+                'id': f"{materia}_{i}"  # Usato per identificare il voto da eliminare
+            })
+    
+    return render_template('voti.html', dati=dati, materie=dati['materie'], voti=voti_formattati)
 
 @app.route('/media')
 def media():
@@ -91,6 +107,34 @@ def orario():
 def modifica_orario():
     # Redirect all'orario principale dove si può modificare
     return redirect(url_for('orario'))
+
+@app.route("/api/voti/elimina", methods=["POST"])
+def elimina_voto():
+    try:
+        data = request.json
+        materia = data.get('materia')
+        indice = int(data.get('indice'))
+        
+        dati = get_dati()
+        
+        # Verifica se la materia esiste
+        if materia not in dati['materie']:
+            return jsonify({"success": False, "error": "Materia non trovata"}), 404
+            
+        # Verifica se l'indice è valido
+        voti_materia = dati['materie'][materia]['voti']
+        if indice < 0 or indice >= len(voti_materia):
+            return jsonify({"success": False, "error": "Indice non valido"}), 400
+            
+        # Rimuovi il voto
+        del dati['materie'][materia]['voti'][indice]
+        save_dati(dati)
+        
+        return jsonify({"success": True})
+            
+    except Exception as e:
+        app.logger.error(f"Errore: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 # -----------------------------------------------
 # GESTIONE MATERIE
@@ -234,12 +278,6 @@ def modifica_voto():
 
             # Modifica e salvataggio
             voti_materia[indice] = nuovo_voto
-            
-            # DEBUG: Converti manualmente _id per la stampa
-            debug_data = dati.copy()
-            debug_data['_id'] = str(debug_data['_id'])
-            print(f"DEBUG - Dati aggiornati:\n{json.dumps(debug_data, indent=2, ensure_ascii=False)}")
-            
             save_dati(dati)  # Salva su MongoDB
             flash('✅ Voto modificato con successo!', 'success')
             return redirect(url_for('voti'))
@@ -252,6 +290,35 @@ def modifica_voto():
         flash(f'❌ Errore critico: {str(e)}', 'danger')
         return redirect(url_for('modifica_voto'))
 
+@app.route("/api/voti/elimina-multi", methods=["POST"])
+def elimina_voti_multi():
+    try:
+        data = request.json
+        votes_to_delete = data.get('votes', [])
+        
+        dati = get_dati()
+        
+        # Organizza i voti per materia
+        subjects = {}
+        for vote in votes_to_delete:
+            materia = vote['materia']
+            indice = int(vote['indice'])
+            if materia not in subjects:
+                subjects[materia] = []
+            subjects[materia].append(indice)
+        
+        # Elimina in ordine inverso per evitare problemi di indici
+        for materia, indices in subjects.items():
+            if materia in dati['materie']:
+                # Ordina gli indici in modo decrescente
+                for indice in sorted(indices, reverse=True):
+                    if 0 <= indice < len(dati['materie'][materia]['voti']):
+                        del dati['materie'][materia]['voti'][indice]
+        
+        save_dati(dati)
+        return jsonify({"success": True, "count": len(votes_to_delete)})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 # -----------------------------------------------
 # ALTRE FUNZIONI
 # -----------------------------------------------
@@ -308,9 +375,11 @@ def reset():
 def gestione():
     return render_template('gestione/menu.html')
 
+
+
 # -----------------------------------------------
 # AVVIO APPLICAZIONE
 # -----------------------------------------------
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False)

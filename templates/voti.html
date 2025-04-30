@@ -1,46 +1,411 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card shadow-lg animate__animated animate__fadeIn">
-    <div class="card-header bg-primary text-white">
-        <h3 class="mb-0"><i class="fas fa-book me-2"></i>Voti</h3>
+<div class="grade-container">
+    <div class="grade-header bg-primary-gradient">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="page-title"><i class="fas fa-clipboard-list me-3"></i>Registro Voti</h1>
+            <button class="btn btn-danger btn-icon" id="bulkDeleteBtn" disabled>
+                <i class="fas fa-trash-alt"></i>
+                <span class="badge bg-white text-danger ms-2" id="selectedCount">0</span>
+            </button>
+        </div>
+        <div class="grade-filter">
+            <input type="text" class="form-control search-input" placeholder="Cerca per materia..." id="searchInput">
+        </div>
     </div>
-    <div class="card-body">
-        {% if not materie %}
-        <div class="alert alert-info animate__animated animate__pulse">
-            <i class="fas fa-info-circle me-2"></i> Nessun voto inserito
+
+    <div class="grade-list">
+        {% if not voti %}
+        <div class="empty-state">
+            <i class="fas fa-clipboard fa-4x mb-4"></i>
+            <h3>Nessun voto registrato</h3>
+            <p class="text-muted">Inizia aggiungendo il tuo primo voto!</p>
+            <a href="{{ url_for('aggiungi_voto') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus-circle me-2"></i>Aggiungi Voto
+            </a>
         </div>
         {% else %}
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th>Materia</th>
-                        <th>Voti</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for materia, dettagli in materie.items() %}
-                    <tr class="animate__animated animate__fadeInUp">
-                        <td class="fw-bold">{{ materia }}</td>
-                        <td>
-                            {% for voto in dettagli.voti %}
-                            <span class="badge 
-                                {% if voto == 10 %}bg-gold crown-badge
-                                {% elif voto >= 7 %}bg-success
-                                {% elif voto >= 5.5 %}bg-warning text-dark
-                                {% else %}bg-danger
-                                {% endif %} me-1 mb-1">
-                                {{ voto }}
-                                {% if voto == 10 %}<i class="fas fa-crown ms-1"></i>{% endif %}
-                            </span>
-                            {% endfor %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="grade-cards">
+            {% for voto in voti %}
+            <div class="grade-card">
+                <label class="grade-checkbox">
+                    <input type="checkbox" class="vote-checkbox" 
+                           data-materia="{{ voto.materia }}" 
+                           data-indice="{{ voto.indice }}">
+                    <span class="checkmark"></span>
+                </label>
+                <div class="grade-content">
+                    <div class="grade-meta">
+                        <span class="grade-subject">{{ voto.materia }}</span>
+                        <span class="grade-date">{{ loop.index }}° Voto</span>
+                    </div>
+                    <div class="grade-value-container">
+                        <div class="grade-value-badge bg-{{ 'success' if voto.valore >= 7 else 'warning' if voto.valore >= 5.5 else 'danger' }}">
+                            {{ "%.2f"|format(voto.valore) }}
+                            {% if voto.valore == 10 %}
+                            <i class="fas fa-star medal-icon"></i>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
         </div>
         {% endif %}
     </div>
 </div>
+
+<!-- Bulk Delete Modal -->
+<div class="modal fade" id="bulkDeleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Conferma eliminazione</h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="delete-icon-wrapper">
+                    <div class="trash-icon">
+                        <i class="fas fa-trash-alt"></i>
+                    </div>
+                </div>
+                <h4 class="my-4">Stai per eliminare <span class="text-danger" id="modalSelectedCount">0</span> voti!</h4>
+                <p class="text-muted">Questa azione è irreversibile. Vuoi procedere?</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-lg btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-lg btn-danger" id="confirmBulkDelete">
+                    <i class="fas fa-trash-alt me-2"></i>Elimina Definitivamente
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Stili Aggiornati */
+.grade-container {
+    background: #f8f9fa;
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.grade-header {
+    background: linear-gradient(135deg, #3f80ff, #0048bd);
+    color: white;
+    padding: 2rem;
+    border-radius: 15px 15px 0 0;
+    margin-bottom: 2rem;
+}
+
+.page-title {
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin: 0;
+}
+
+.btn-icon {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.btn-icon:hover {
+    transform: translateY(-2px);
+}
+
+.search-input {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    margin-top: 1.5rem;
+}
+
+.search-input::placeholder {
+    color: rgba(255,255,255,0.7);
+}
+
+.grade-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.grade-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+.grade-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+}
+
+.grade-checkbox {
+    position: relative;
+    margin-right: 1.5rem;
+}
+
+.grade-checkbox input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.checkmark {
+    display: block;
+    width: 24px;
+    height: 24px;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.grade-checkbox input:checked ~ .checkmark {
+    background: #3f80ff;
+    border-color: #3f80ff;
+}
+
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 7px;
+    top: 3px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.grade-checkbox input:checked ~ .checkmark:after {
+    display: block;
+}
+
+.grade-content {
+    flex-grow: 1;
+}
+
+.grade-meta {
+    margin-bottom: 0.5rem;
+}
+
+.grade-subject {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #2c3e50;
+}
+
+.grade-date {
+    font-size: 0.9rem;
+    color: #95a5a6;
+    margin-left: 0.75rem;
+}
+
+.grade-value-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1.25rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.medal-icon {
+    margin-left: 0.5rem;
+    font-size: 0.8em;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.delete-icon-wrapper {
+    position: relative;
+    margin: 2rem 0;
+}
+
+.trash-icon {
+    width: 80px;
+    height: 80px;
+    background: #ffe6e6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    color: #dc3545;
+    font-size: 2rem;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.toast-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    animation: slideIn 0.3s ease-out;
+    z-index: 1000;
+}
+
+.toast-notification.success {
+    border-left: 4px solid #28a745;
+}
+
+.toast-notification.danger {
+    border-left: 4px solid #dc3545;
+}
+
+.grade-card {
+    transition: all 0.3s ease, opacity 0.3s;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
+
+@media (max-width: 768px) {
+    .grade-container {
+        padding: 1rem;
+    }
+    
+    .grade-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .grade-header {
+        padding: 1.5rem;
+    }
+}
+</style>
+
+<script>
+// Script migliorato con ricerca live
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const gradeCards = document.querySelectorAll('.grade-card');
+    
+    // Funzionalità ricerca
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        
+        gradeCards.forEach(card => {
+            const subject = card.querySelector('.grade-subject').textContent.toLowerCase();
+            card.style.display = subject.includes(searchTerm) ? 'flex' : 'none';
+        });
+    });
+
+    // Gestione selezione multipla
+    const updateSelectionCount = () => {
+        const selected = document.querySelectorAll('.vote-checkbox:checked').length;
+        document.getElementById('selectedCount').textContent = selected;
+        document.getElementById('modalSelectedCount').textContent = selected;
+        document.getElementById('bulkDeleteBtn').disabled = selected === 0;
+    };
+
+    document.querySelectorAll('.vote-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectionCount);
+    });
+
+    // Gestione modale
+    const bulkDeleteModal = new bootstrap.Modal('#bulkDeleteModal');
+    
+    document.getElementById('bulkDeleteBtn').addEventListener('click', () => {
+        bulkDeleteModal.show();
+    });
+
+    document.getElementById('confirmBulkDelete').addEventListener('click', function() {
+    const selected = Array.from(document.querySelectorAll('.vote-checkbox:checked'))
+        .map(checkbox => ({
+            materia: checkbox.dataset.materia,
+            indice: parseInt(checkbox.dataset.indice)
+        }));
+
+    fetch('/api/voti/elimina-multi', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ votes: selected })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Rimuovi le card eliminate
+            document.querySelectorAll('.vote-checkbox:checked').forEach(checkbox => {
+                const gradeCard = checkbox.closest('.grade-card');
+                if (gradeCard) {
+                    gradeCard.style.opacity = '0';
+                    setTimeout(() => gradeCard.remove(), 300);
+                }
+            });
+            
+            // Aggiorna UI
+            bulkDeleteModal.hide();
+            updateSelectionCount();
+            
+            // Mostra notifica
+            showToast(`${data.count} voti eliminati con successo!`, 'success');
+            
+            // Se non ci sono più voti, ricarica
+            if (document.querySelectorAll('.grade-card').length === 0) {
+                setTimeout(() => location.reload(), 500);
+            }
+        } else {
+            showToast(`Errore: ${data.error}`, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Errore di connessione', 'danger');
+    });
+});
+
+// Aggiungi questa funzione per le notifiche
+function showToast(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `toast-notification ${type}`;
+    toast.innerHTML = `
+        <div class="toast-content">
+            <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i>
+            ${message}
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+});
+
+</script>
 {% endblock %}

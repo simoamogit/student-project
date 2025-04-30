@@ -2,6 +2,23 @@
 :root {
     --gold: #FFD700;
     --light-shadow: rgba(0,0,0,0.1);
+    --primary-gradient: linear-gradient(135deg, #3f80ff, #0048bd);
+    --success-light: #d4edda;
+    --warning-light: #fff3cd;
+    --danger-light: #f8d7da;
+    --box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Ottimizza le transizioni */
+* {
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+/* Migliora la leggibilità */
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    line-height: 1.6;
+    color: #2c3e50;
 }
 
 /* Animazioni */
@@ -54,4 +71,81 @@
 
 .badge:hover::after {
     left: 100%;
+}
+
+/* Stile per ogni elemento voto */
+.voto-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    background-color: #f9f9f9;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+}
+
+.voto-item:hover {
+    background-color: #f0f0f0;
+}
+
+.voto-info {
+    display: flex;
+    gap: 15px;
+}
+
+.materia {
+    font-weight: bold;
+    min-width: 120px;
+}
+
+.valore {
+    font-size: 1.1em;
+    min-width: 40px;
+    text-align: center;
+}
+
+.data {
+    color: #666;
+}
+
+/* Stile per il bottone elimina */
+.btn-elimina {
+    background: none;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    color: #ff3b30;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.btn-elimina:hover {
+    opacity: 1;
+}
+
+/* Stili per i messaggi di feedback */
+.messaggio {
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    animation: fadeIn 0.3s ease;
+}
+
+.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
