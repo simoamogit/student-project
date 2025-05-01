@@ -454,3 +454,47 @@ body {
         margin-top: 1rem;
     }
 }
+
+/* Stili per il profilo */
+.navbar-nav .dropdown-toggle img {
+    border: 2px solid var(--gold);
+    object-fit: cover;
+}
+
+.dropdown-menu {
+    min-width: 120px;
+}
+
+/* Aggiungi a static/style.css */
+.card-footer button {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-footer button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(63, 128, 255, 0.3);
+}
+
+.card-footer button:active {
+    transform: translateY(0);
+}
+
+.card-footer button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+}
+
+.card-footer button:active::after {
+    width: 200px;
+    height: 200px;
+}

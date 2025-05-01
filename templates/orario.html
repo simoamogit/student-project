@@ -1,43 +1,50 @@
 {% extends "base.html" %}
 {% block content %}
-<!-- Modifica in orario.html -->
 <div class="card shadow-lg">
     <div class="card shadow-lg mobile-timetable">
         <div class="card-header bg-primary text-white">
             <h3 class="mb-0"><i class="fas fa-clock me-2"></i>Orario Q{{ quadrimestre }}</h3>
         </div>
-        <div class="card-body p-0">
-            <div class="timetable-scroll">
-                <table class="table table-bordered table-hover mb-0">
-                <thead class="timetable-header">
-                    <tr>
-                        <th class="time-column">Ora</th>
-                        {% for giorno in ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'] %}
-                        <th class="day-header">{{ giorno }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for ora in range(6) %}
-                    <tr class="timetable-row">
-                        <td class="time-cell">{{ ora + 1 }}ª</td>
-                        {% for giorno in ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'] %}
-                        <td class="subject-cell subject-cell-{{ loop.index }}" 
-    data-subject="{{ orario[giorno][ora] }}">
-                            <input type="text" 
-                                   class="form-control border-0 bg-transparent" 
-                                   name="{{ giorno }}_{{ ora }}" 
-                                   value="{{ orario[giorno][ora] }}">
-                        </td>
-                        {% endfor %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <div class="mobile-alert alert alert-info d-none m-3">
-            <i class="fas fa-info-circle me-2"></i>Scorri lateralmente per vedere tutti i giorni
-        </div>
-        </div>
+        <form method="POST" action="{{ url_for('orario') }}">
+            <div class="card-body p-0">
+                <div class="timetable-scroll">
+                    <table class="table table-bordered table-hover mb-0">
+                        <thead class="timetable-header">
+                            <tr>
+                                <th class="time-column">Ora</th>
+                                {% for giorno in ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'] %}
+                                <th class="day-header">{{ giorno }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ora in range(6) %}
+                            <tr class="timetable-row">
+                                <td class="time-cell">{{ ora + 1 }}ª</td>
+                                {% for giorno in ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'] %}
+                                <td class="subject-cell subject-cell-{{ loop.index }}" 
+                                    data-subject="{{ orario[giorno][ora] }}">
+                                    <input type="text" 
+                                           class="form-control border-0 bg-transparent" 
+                                           name="{{ giorno }}_{{ ora }}" 
+                                           value="{{ orario[giorno][ora] }}">
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div class="mobile-alert alert alert-info d-none m-3">
+                        <i class="fas fa-info-circle me-2"></i>Scorri lateralmente per vedere tutti i giorni
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-light">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-save me-2"></i>Salva Modifiche
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}

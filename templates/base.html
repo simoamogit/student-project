@@ -76,6 +76,20 @@
                         </ul>
                     </li>
                 </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            {% if current_user.is_authenticated and current_user.picture %}
+                                <img src="{{ current_user.picture }}" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px;">
+                            {% else %}
+                                <i class="fas fa-user-circle fa-2x"></i>
+                            {% endif %}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item text-danger" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>

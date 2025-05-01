@@ -181,6 +181,10 @@ def logout():
 @login_required
 def home():
     dati = get_dati()
+    # Aggiungi controllo per assicurarti che i dati siano validi
+    if not dati or 'anno_scolastico' not in dati:
+        flash("Benvenuto! Inizia configurando il tuo account.", "info")
+        return redirect(url_for('impostazioni'))
     return render_template('home.html', dati=dati)
 
 @app.route('/voti')
