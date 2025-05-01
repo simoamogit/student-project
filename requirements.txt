@@ -1,3 +1,8 @@
-flask
-pymongo
-python-dotenv
+flask==3.0.2
+flask-dance==8.0.0
+pymongo==4.6.2
+python-dotenv==1.0.1
+gunicorn==21.2.0
+oauthlib==3.2.2
+requests-oauthlib==1.3.1
+flask-login==0.6.3
