@@ -1,45 +1,34 @@
+from pymongo import MongoClient
 import os
 from dotenv import load_dotenv
-from pymongo import MongoClient
 
-# Carica le variabili d'ambiente
 load_dotenv()
 
-# Configura la connessione usando la stessa URI dell'app
 client = MongoClient(os.getenv("MONGO_URI"))
 db = client.gestione_scuola
-col = db.dati
 
-try:
-    # Verifica la connessione
-    client.admin.command('ping')
-    print("Connessione a MongoDB riuscita!")
+# Recupera i dati vecchi
+vecchi_dati = db.dati.find_one()
 
-    doc = col.find_one()
-
-    if doc and 'orario' in doc:
-        # Migrazione struttura orario solo se necessario
-        if not any(key.startswith('quadrimestre_') for key in doc['orario']):
-            print("Avvio migrazione dati orario...")
-            
-            # Crea la nuova struttura
-            nuovo_orario = {
-                'quadrimestre_1': doc['orario'],
-                'quadrimestre_2': {giorno: ['']*6 for giorno in doc['orario']}
-            }
-            
-            # Aggiorna il documento
-            col.update_one(
-                {'_id': doc['_id']},
-                {'$set': {'orario': nuovo_orario}}
-            )
-            print("Migrazione completata con successo!")
-        else:
-            print("Struttura orario già aggiornata, nessuna migrazione necessaria.")
-    else:
-        print("Nessun documento trovato o campo 'orario' mancante")
-
-except Exception as e:
-    print(f"Errore durante la migrazione: {str(e)}")
-finally:
-    client.close()
+if vecchi_dati:
+    # Crea un utente demo
+    user_data = {
+        "google_id": "demo_user",
+        "email": "demo@studentplanner.com",
+        "name": "Utente Demo",
+        "quadrimestre": vecchi_dati.get("quadrimestre", 1),
+        "anno_scolastico": vecchi_dati.get("anno_scolastico", "2023/2024"),
+        "materie": vecchi_dati.get("materie", {}),
+        "professori": vecchi_dati.get("professori", []),
+        "orario": vecchi_dati.get("orario", {})
+    }
+    
+    # Inserisci nella nuova collection
+    db.users.insert_one(user_data)
+    
+    # Opzionale: elimina i vecchi dati
+    # db.dati.deleteMany({})
+    
+    print("Migrazione completata!")
+else:
+    print("Nessun dato da migrare")
