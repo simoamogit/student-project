@@ -42,9 +42,11 @@
             {% for voto in voti %}
             <div class="grade-card">
                 <label class="grade-checkbox">
-                    <input type="checkbox" class="vote-checkbox" 
-                           data-materia="{{ voto.materia }}" 
-                           data-indice="{{ voto.indice }}">
+                    <input type="checkbox" 
+       class="vote-checkbox" 
+       data-id="{{ voto.materia }}|{{ voto.indice }}"
+       data-materia="{{ voto.materia }}" 
+       data-indice="{{ voto.indice }}">
                     <span class="checkmark"></span>
                 </label>
                 <div class="grade-content">
@@ -349,112 +351,126 @@
 </style>
 
 <script>
-// Script migliorato con ricerca live
+// Script migliorato con ricerca live e gestione delle selezioni
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const gradeCards = document.querySelectorAll('.grade-card');
     
     // Funzionalità ricerca
-    searchInput.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            gradeCards.forEach(card => {
+                const subject = card.querySelector('.grade-subject').textContent.toLowerCase();
+                card.style.display = subject.includes(searchTerm) ? 'flex' : 'none';
+            });
+        });
+    }
+
+    // Nuovo sistema di gestione selezione multipla
+    let selectedVotes = new Set();
+    
+    // Delegazione eventi corretta
+    document.querySelector('.grade-list').addEventListener('change', (e) => {
+        const checkbox = e.target.closest('.vote-checkbox');
+        if(checkbox) {
+            const id = checkbox.dataset.id;
+            checkbox.checked ? selectedVotes.add(id) : selectedVotes.delete(id);
+            updateDeleteButton(selectedVotes.size);
+        }
+    });
+    
+    function updateDeleteButton(count) {
+        const btn = document.getElementById('bulkDeleteBtn');
+        btn.disabled = count === 0;
+        btn.querySelector('#selectedCount').textContent = count;
+        document.getElementById('modalSelectedCount').textContent = count;
+    }
+
+    // Gestione modale
+    let bulkDeleteModal;
+    if (document.getElementById('bulkDeleteModal')) {
+        bulkDeleteModal = new bootstrap.Modal('#bulkDeleteModal');
         
-        gradeCards.forEach(card => {
-            const subject = card.querySelector('.grade-subject').textContent.toLowerCase();
-            card.style.display = subject.includes(searchTerm) ? 'flex' : 'none';
+        document.getElementById('bulkDeleteBtn').addEventListener('click', () => {
+            bulkDeleteModal.show();
+        });
+    }
+
+    // Aggiornamento funzione eliminazione
+    document.getElementById('confirmBulkDelete').addEventListener('click', () => {
+        const votes = Array.from(selectedVotes).map(id => {
+            const [materia, indice] = id.split('|');
+            return { materia, indice: parseInt(indice) };
+        });
+        
+        fetch('/api/voti/elimina-multi', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ votes })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Rimuovi le card eliminate
+                selectedVotes.forEach(id => {
+                    const checkbox = document.querySelector(`.vote-checkbox[data-id="${id}"]`);
+                    if (checkbox) {
+                        const gradeCard = checkbox.closest('.grade-card');
+                        if (gradeCard) {
+                            gradeCard.style.opacity = '0';
+                            setTimeout(() => gradeCard.remove(), 300);
+                        }
+                    }
+                });
+                
+                // Aggiorna UI
+                bulkDeleteModal.hide();
+                selectedVotes.clear();
+                updateDeleteButton(0);
+                
+                // Mostra notifica
+                showToast(`${data.count} voti eliminati con successo!`, 'success');
+                
+                // Se non ci sono più voti, ricarica
+                if (document.querySelectorAll('.grade-card').length === 0) {
+                    setTimeout(() => location.reload(), 500);
+                }
+            } else {
+                showToast(`Errore: ${data.error}`, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Errore di connessione', 'danger');
         });
     });
 
-    // Gestione selezione multipla
-    const updateSelectionCount = () => {
-        const selected = document.querySelectorAll('.vote-checkbox:checked').length;
-        document.getElementById('selectedCount').textContent = selected;
-        document.getElementById('modalSelectedCount').textContent = selected;
-        document.getElementById('bulkDeleteBtn').disabled = selected === 0;
-    };
-
-    document.querySelectorAll('.vote-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', updateSelectionCount);
-    });
-
-    // Gestione modale
-    const bulkDeleteModal = new bootstrap.Modal('#bulkDeleteModal');
-    
-    document.getElementById('bulkDeleteBtn').addEventListener('click', () => {
-        bulkDeleteModal.show();
-    });
-
-    document.getElementById('confirmBulkDelete').addEventListener('click', function() {
-    const selected = Array.from(document.querySelectorAll('.vote-checkbox:checked'))
-        .map(checkbox => ({
-            materia: checkbox.dataset.materia,
-            indice: parseInt(checkbox.dataset.indice)
-        }));
-
-    fetch('/api/voti/elimina-multi', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ votes: selected })
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            // Rimuovi le card eliminate
-            document.querySelectorAll('.vote-checkbox:checked').forEach(checkbox => {
-                const gradeCard = checkbox.closest('.grade-card');
-                if (gradeCard) {
-                    gradeCard.style.opacity = '0';
-                    setTimeout(() => gradeCard.remove(), 300);
-                }
-            });
-            
-            // Aggiorna UI
-            bulkDeleteModal.hide();
-            updateSelectionCount();
-            
-            // Mostra notifica
-            showToast(`${data.count} voti eliminati con successo!`, 'success');
-            
-            // Se non ci sono più voti, ricarica
-            if (document.querySelectorAll('.grade-card').length === 0) {
-                setTimeout(() => location.reload(), 500);
-            }
-        } else {
-            showToast(`Errore: ${data.error}`, 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('Errore di connessione', 'danger');
-    });
+    // Aggiungi questa funzione per le notifiche
+    function showToast(message, type) {
+        const toast = document.createElement('div');
+        toast.className = `toast-notification ${type}`;
+        toast.innerHTML = `
+            <div class="toast-content">
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i>
+                ${message}
+            </div>
+        `;
+        
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
 });
-
-// Aggiungi questa funzione per le notifiche
-function showToast(message, type) {
-    const toast = document.createElement('div');
-    toast.className = `toast-notification ${type}`;
-    toast.innerHTML = `
-        <div class="toast-content">
-            <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i>
-            ${message}
-        </div>
-    `;
-    
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
-});
-
 </script>
 
 <script>
-    // Aggiungi questo script
+    // Gestione filtri
     document.querySelectorAll('.btn-filter').forEach(btn => {
         btn.addEventListener('click', function() {
             const filtro = this.dataset.filtro;
@@ -501,5 +517,5 @@ function showToast(message, type) {
     
     // Inizializza al caricamento
     initFilters();
-    </script>
+</script>
 {% endblock %}

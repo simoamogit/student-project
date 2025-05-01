@@ -76,16 +76,21 @@ def voti():
                 })
     
     return render_template('voti.html', dati=dati, voti=voti_formattati)
+
 @app.route('/media')
 def media():
     dati = get_dati()
-    medie = {}
+    filtro = dati.get('filtro_visualizzazione', 'quadrimestre')
+    quadrimestre = dati['quadrimestre']
     
+    medie = {}
     for materia, dettagli in dati['materie'].items():
-        if dettagli['voti']:
-            # Estrae solo i valori numerici dai voti
-            valori_voti = [v['valore'] if isinstance(v, dict) else v for v in dettagli['voti']]
-            medie[materia] = sum(valori_voti) / len(valori_voti)
+        voti_filtrati = [
+            v['valore'] for v in dettagli['voti'] 
+            if filtro == 'tutto' or v['quadrimestre'] == quadrimestre
+        ]
+        if voti_filtrati:
+            medie[materia] = sum(voti_filtrati)/len(voti_filtrati)
     
     media_generale = sum(medie.values())/len(medie) if medie else 0
     return render_template('media.html', 
@@ -96,19 +101,32 @@ def media():
 @app.route('/orario', methods=['GET', 'POST'])
 def orario():
     dati = get_dati()
+    giorni = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"]  # Sposta qui la definizione
+
     if request.method == 'POST':
         try:
-            giorni = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"]
-            orario = {}
-            # Assume 6 ore per giorno
+            nuovo_orario = {}
             for giorno in giorni:
-                orario[giorno] = [request.form.get(f"{giorno}_{i}") for i in range(6)]
-            dati['orario'] = orario
+                nuovo_orario[giorno] = [request.form.get(f"{giorno}_{i}") for i in range(6)]
+            
+            # Salva per quadrimestre corrente
+            dati['orario'][f'quadrimestre_{dati["quadrimestre"]}'] = nuovo_orario
             save_dati(dati)
             flash('Orario salvato!', 'success')
+            
         except Exception as e:
             flash(f'Errore: {str(e)}', 'danger')
-    return render_template('orario.html', dati=dati, orario=dati['orario'])
+
+    # Carica orario per quadrimestre corrente
+    orario_corrente = dati['orario'].get(
+        f'quadrimestre_{dati["quadrimestre"]}', 
+        {giorno: ['']*6 for giorno in giorni}  # Ora 'giorni' è definito
+    )
+    
+    return render_template('orario.html', 
+                         dati=dati,
+                         orario=orario_corrente,
+                         quadrimestre=dati['quadrimestre'])
 
 @app.route('/modifica_orario')
 def modifica_orario():

@@ -151,31 +151,60 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* Aggiungi al file style.css */
 .grade-card {
-    position: relative;
-    overflow: hidden;
+    margin: 1rem 0;
+    padding: 1.5rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.grade-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+}
+
+.grade-header {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #2c3e50, #3498db);
+}
+
+.search-input {
+    width: 100%;
+    max-width: 400px;
+    margin: 1.5rem 0;
+    border-radius: 25px;
+    padding: 0.8rem 1.5rem;
 }
 
 .quadrimestre-badge {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    background: rgba(0,0,0,0.8);
+    top: 0.8rem;
+    right: 0.8rem;
+    background: #2ecc71 !important;
     color: white;
-    padding: 3px 8px;
+    padding: 0.3em 0.6em;
     border-radius: 4px;
-    font-size: 0.75em;
+    font-size: 0.8em;
     font-weight: 500;
     letter-spacing: 0.5px;
 }
 
-#currentPeriod {
-    font-weight: 600;
-    color: #ffd700;
-    transition: all 0.3s ease;
+/* Fix per elementi attaccati */
+.navbar-brand {
+    padding-right: 1.5rem;
+}
+
+/* Fix spaziatura navbar */
+.navbar-nav .nav-item {
+    margin: 0 0.5rem;
 }
 
 .dropdown-menu {
+    min-width: 200px;
     border: 1px solid rgba(255,215,0,0.3);
 }
 
@@ -186,4 +215,242 @@ body {
 .dropdown-item:hover {
     background: linear-gradient(90deg, rgba(255,215,0,0.1), transparent);
     transform: translateX(5px);
+}
+
+#currentPeriod {
+    font-weight: 600;
+    color: #ffd700;
+    transition: all 0.3s ease;
+}
+
+/* Allineamento card header */
+.card-header h3 {
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Aggiungi in style.css per migliorare la tabella orario */
+.orario-table td {
+    min-width: 120px;
+    position: relative;
+}
+
+.orario-table input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 0.5rem;
+}
+
+.orario-table input:focus {
+    background: #f8f9fa;
+    outline: 2px solid #3f80ff;
+}
+
+/* Aggiungi a style.css */
+.timetable-wrapper {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.timetable-header {
+    background: #2c3e50;
+    color: white;
+}
+
+.day-header {
+    text-align: center;
+    vertical-align: middle;
+    min-width: 150px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.9em;
+}
+
+.time-column {
+    background: #34495e;
+    color: white;
+    text-align: center;
+    vertical-align: middle;
+    width: 60px;
+    font-weight: 500;
+}
+
+.time-cell {
+    background: #ecf0f1;
+    font-weight: 600;
+    text-align: center;
+}
+
+.subject-cell {
+    position: relative;
+    transition: all 0.2s ease;
+    vertical-align: middle;
+}
+
+.subject-cell:hover {
+    transform: scale(1.02);
+    z-index: 1;
+}
+
+.subject-cell input {
+    font-weight: 500;
+    height: 100%;
+    padding: 1rem;
+    transition: all 0.2s ease;
+}
+
+.subject-cell input:focus {
+    background: rgba(255,255,255,0.9);
+    box-shadow: 0 0 0 2px #3f80ff;
+    z-index: 2;
+}
+
+/* Colori materie dinamici */
+.subject-cell {
+    background-color: #f8f9fa;
+}
+
+.subject-cell[style*="background-color"] input {
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.subject-cell[style*="background-color"] input::placeholder {
+    color: rgba(255,255,255,0.8);
+}
+
+/* Aggiungi a style.css */
+.mobile-timetable {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.timetable-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.day-header {
+    min-width: 180px;
+}
+
+.time-column {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: #34495e !important;
+}
+
+.subject-cell {
+    min-width: 180px;
+}
+
+@media (max-width: 768px) {
+    .mobile-alert {
+        display: block !important;
+    }
+    
+    .timetable-header th {
+        font-size: 0.8rem;
+    }
+    
+    .time-cell {
+        font-size: 0.9rem;
+        padding: 0.5rem;
+    }
+    
+    .subject-cell input {
+        padding: 0.75rem;
+        font-size: 0.85rem;
+    }
+    
+    .day-header {
+        min-width: 160px;
+    }
+}
+
+@media (max-width: 576px) {
+    .timetable-scroll {
+        max-width: 95vw;
+    }
+    
+    .day-header {
+        min-width: 140px;
+        font-size: 0.75rem;
+    }
+    
+    .subject-cell {
+        min-width: 140px;
+    }
+    
+    .subject-cell input {
+        padding: 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .time-cell {
+        width: 50px;
+        font-size: 0.8rem;
+    }
+
+    @media (max-width: 375px) {
+        .day-header {
+            min-width: 120px;
+            font-size: 0.7rem;
+        }
+        
+        .subject-cell {
+            min-width: 120px;
+        }
+        
+        .subject-cell input {
+            font-size: 0.75rem;
+            padding: 0.4rem;
+        }
+        
+        .time-cell {
+            width: 45px;
+            font-size: 0.75rem;
+        }
+    }
+}
+
+/* Effetto scroll visibile */
+.timetable-scroll::-webkit-scrollbar {
+    height: 8px;
+    background: #f1f1f1;
+}
+
+.timetable-scroll::-webkit-scrollbar-thumb {
+    background: #3f80ff;
+    border-radius: 4px;
+}
+
+.timetable-scroll::-webkit-scrollbar-track {
+    background: #f8f9fa;
+}
+
+@keyframes fadeInCell {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.subject-cell {
+    animation: fadeInCell 0.3s ease forwards;
+    animation-delay: calc(var(--index) * 0.05s);
+}
+
+@media (max-width: 768px) {
+    .grade-card {
+        margin-bottom: 1rem;
+        padding: 1rem;
+    }
+    
+    .navbar-nav {
+        margin-top: 1rem;
+    }
 }
