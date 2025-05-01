@@ -62,29 +62,54 @@ def home():
 @app.route('/voti')
 def voti():
     dati = get_dati()
+    filtro_corrente = dati.get('filtro_voti', 'quadrimestre')
+    
     voti_formattati = []
+    quadrimestre_corrente = dati['quadrimestre']
     
-    # Prepara i voti per la visualizzazione
     for materia, dettagli in dati['materie'].items():
-        for i, voto in enumerate(dettagli['voti']):
-            voti_formattati.append({
-                'materia': materia,
-                'valore': voto,
-                'indice': i,
-                'id': f"{materia}_{i}"  # Usato per identificare il voto da eliminare
-            })
+        for i, voto_data in enumerate(dettagli['voti']):
+            # Migrazione automatica per i voti vecchi
+            if isinstance(voto_data, (int, float)):
+                voto = {
+                    'valore': voto_data, 
+                    'quadrimestre': quadrimestre_corrente,
+                    'data': datetime.now().strftime("%Y-%m-%d")
+                }
+                dati['materie'][materia]['voti'][i] = voto
+                save_dati(dati)
+            else:
+                voto = voto_data
+            
+            if filtro_corrente == 'anno' or voto['quadrimestre'] == quadrimestre_corrente:
+                voti_formattati.append({
+                    'materia': materia,
+                    'valore': voto['valore'],
+                    'quadrimestre': voto['quadrimestre'],
+                    'indice': i,
+                    'id': f"{materia}_{i}"
+                })
     
-    return render_template('voti.html', dati=dati, materie=dati['materie'], voti=voti_formattati)
-
+    return render_template('voti.html', 
+                         dati=dati,
+                         voti=voti_formattati,
+                         filtro_corrente=filtro_corrente)
 @app.route('/media')
 def media():
     dati = get_dati()
     medie = {}
+    
     for materia, dettagli in dati['materie'].items():
         if dettagli['voti']:
-            medie[materia] = sum(dettagli['voti'])/len(dettagli['voti'])
+            # Estrae solo i valori numerici dai voti
+            valori_voti = [v['valore'] if isinstance(v, dict) else v for v in dettagli['voti']]
+            medie[materia] = sum(valori_voti) / len(valori_voti)
+    
     media_generale = sum(medie.values())/len(medie) if medie else 0
-    return render_template('media.html', dati=dati, medie=medie, media_generale=media_generale)
+    return render_template('media.html', 
+                         dati=dati,
+                         medie=medie,
+                         media_generale=media_generale)
 
 @app.route('/orario', methods=['GET', 'POST'])
 def orario():
@@ -232,18 +257,23 @@ def aggiungi_voto():
         dati = get_dati()
         if request.method == 'POST':
             materia = request.form.get('materia')
-            voto = float(request.form.get('voto'))
+            voto_valore = float(request.form.get('voto'))
             
-            # Validazione
-            if voto < 0 or voto > 10:
+            if voto_valore < 0 or voto_valore > 10:
                 flash("Il voto deve essere tra 0 e 10!", 'danger')
                 return redirect(url_for('aggiungi_voto'))
             
             if materia not in dati['materie']:
                 flash("Materia non trovata!", 'danger')
                 return redirect(url_for('voti'))
+
+            nuovo_voto = {
+                'valore': voto_valore,
+                'quadrimestre': dati['quadrimestre'],
+                'data': datetime.now().strftime("%Y-%m-%d")
+            }
             
-            dati['materie'][materia]['voti'].append(voto)
+            dati['materie'][materia]['voti'].append(nuovo_voto)
             save_dati(dati)
             flash('Voto aggiunto con successo!', 'success')
             return redirect(url_for('voti'))
@@ -258,34 +288,33 @@ def aggiungi_voto():
 @app.route('/modifica_voto', methods=['GET', 'POST'])
 def modifica_voto():
     try:
-        dati = get_dati()  # Dati già convertiti con _id come stringa
+        dati = get_dati()
         
         if request.method == 'POST':
             materia = request.form['materia']
             indice = int(request.form['indice'])
-            nuovo_voto = float(request.form['nuovo_voto'])
+            nuovo_valore = float(request.form['nuovo_voto'])
 
-            # Verifica esistenza materia
             if materia not in dati['materie']:
                 flash('❌ Materia non trovata!', 'danger')
                 return redirect(url_for('modifica_voto'))
 
-            # Controllo indice valido
             voti_materia = dati['materie'][materia]['voti']
+            
             if indice < 0 or indice >= len(voti_materia):
                 flash('❌ Indice non valido!', 'danger')
                 return redirect(url_for('modifica_voto'))
 
-            # Modifica e salvataggio
-            voti_materia[indice] = nuovo_voto
-            save_dati(dati)  # Salva su MongoDB
+            # Mantieni i dati esistenti e aggiorna solo il valore
+            voti_materia[indice]['valore'] = nuovo_valore
+            save_dati(dati)
+            
             flash('✅ Voto modificato con successo!', 'success')
             return redirect(url_for('voti'))
 
         return render_template('gestione/modifica_voto.html',
                              materie=dati['materie'],
                              dati=dati)
-                             
     except Exception as e:
         flash(f'❌ Errore critico: {str(e)}', 'danger')
         return redirect(url_for('modifica_voto'))
@@ -297,28 +326,56 @@ def elimina_voti_multi():
         votes_to_delete = data.get('votes', [])
         
         dati = get_dati()
-        
-        # Organizza i voti per materia
+        deleted_count = 0
+
+        # Organizza per materia e verifica gli indici
         subjects = {}
         for vote in votes_to_delete:
-            materia = vote['materia']
-            indice = int(vote['indice'])
+            materia = vote.get('materia')
+            indice = int(vote.get('indice', -1))
+            
+            if materia not in dati['materie']:
+                continue
+                
+            if indice < 0 or indice >= len(dati['materie'][materia]['voti']):
+                continue
+                
             if materia not in subjects:
                 subjects[materia] = []
             subjects[materia].append(indice)
-        
-        # Elimina in ordine inverso per evitare problemi di indici
+
+        # Elimina in ordine inverso
         for materia, indices in subjects.items():
-            if materia in dati['materie']:
-                # Ordina gli indici in modo decrescente
-                for indice in sorted(indices, reverse=True):
-                    if 0 <= indice < len(dati['materie'][materia]['voti']):
-                        del dati['materie'][materia]['voti'][indice]
-        
+            unique_indices = list(set(indices))  # Rimuovi duplicati
+            for indice in sorted(unique_indices, reverse=True):
+                del dati['materie'][materia]['voti'][indice]
+                deleted_count += 1
+
         save_dati(dati)
-        return jsonify({"success": True, "count": len(votes_to_delete)})
+        return jsonify({
+            "success": True,
+            "count": deleted_count
+        })
+        
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "count": 0
+        }), 500
+    
+# Aggiungi queste route in app.py
+@app.route('/api/imposta-filtro', methods=['POST'])
+def imposta_filtro():
+    dati = get_dati()
+    nuovo_filtro = request.json.get('filtro')
+    
+    if nuovo_filtro not in ['anno', 'quadrimestre']:
+        return jsonify({"success": False, "error": "Filtro non valido"}), 400
+    
+    dati['filtro_voti'] = nuovo_filtro
+    save_dati(dati)
+    return jsonify({"success": True})
 # -----------------------------------------------
 # ALTRE FUNZIONI
 # -----------------------------------------------

@@ -2,17 +2,30 @@
 {% block content %}
 <div class="grade-container">
     <div class="grade-header bg-primary-gradient">
-        <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
             <h1 class="page-title"><i class="fas fa-clipboard-list me-3"></i>Registro Voti</h1>
-            <button class="btn btn-danger btn-icon" id="bulkDeleteBtn" disabled>
-                <i class="fas fa-trash-alt"></i>
-                <span class="badge bg-white text-danger ms-2" id="selectedCount">0</span>
-            </button>
+            
+            <div class="d-flex align-items-center gap-3">
+                <div class="filter-control">
+                    <div class="btn-group" role="group">
+                        <button type="button" 
+                                class="btn btn-filter {% if filtro_corrente == 'quadrimestre' %}active{% endif %}"
+                                data-filtro="quadrimestre">
+                            Q{{ dati.quadrimestre }}
+                        </button>
+                        <button type="button" 
+                                class="btn btn-filter {% if filtro_corrente == 'anno' %}active{% endif %}"
+                                data-filtro="anno">
+                            Anno Scolastico
+                        </button>
+                    </div>
+                </div>
+                <button class="btn btn-danger btn-icon" id="bulkDeleteBtn" disabled>
+                    <i class="fas fa-trash-alt"></i>
+                    <span class="badge bg-white text-danger ms-2" id="selectedCount">0</span>
+                </button>
+            </div>
         </div>
-        <div class="grade-filter">
-            <input type="text" class="form-control search-input" placeholder="Cerca per materia..." id="searchInput">
-        </div>
-    </div>
 
     <div class="grade-list">
         {% if not voti %}
@@ -37,7 +50,9 @@
                 <div class="grade-content">
                     <div class="grade-meta">
                         <span class="grade-subject">{{ voto.materia }}</span>
-                        <span class="grade-date">{{ loop.index }}° Voto</span>
+                        {% if filtro_corrente == 'anno' %}
+                        <span class="quadrimestre-badge">Q{{ voto.quadrimestre }}</span>
+                        {% endif %}
                     </div>
                     <div class="grade-value-container">
                         <div class="grade-value-badge bg-{{ 'success' if voto.valore >= 7 else 'warning' if voto.valore >= 5.5 else 'danger' }}">
@@ -284,6 +299,35 @@
     transition: all 0.3s ease, opacity 0.3s;
 }
 
+.btn-filter {
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border: 2px solid rgba(255,255,255,0.3);
+    padding: 0.5rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-filter.active {
+    background: white !important;
+    color: var(--primary) !important;
+    border-color: white;
+}
+
+.btn-filter:not(.active):hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.quadrimestre-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+}
+
 @keyframes slideIn {
     from { transform: translateX(100%); }
     to { transform: translateX(0); }
@@ -408,4 +452,54 @@ function showToast(message, type) {
 });
 
 </script>
+
+<script>
+    // Aggiungi questo script
+    document.querySelectorAll('.btn-filter').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const filtro = this.dataset.filtro;
+            
+            fetch('/api/imposta-filtro', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ filtro: filtro })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Ricarica solo la sezione dei voti
+                    loadVoti();
+                }
+            });
+        });
+    });
+    
+    function loadVoti() {
+        fetch(window.location.href)
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const newDoc = parser.parseFromString(html, 'text/html');
+            const newContent = newDoc.querySelector('.grade-list').innerHTML;
+            
+            document.querySelector('.grade-list').innerHTML = newContent;
+            lazyLoadCards();
+            initFilters();
+        });
+    }
+    
+    function initFilters() {
+        document.querySelectorAll('.btn-filter').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    }
+    
+    // Inizializza al caricamento
+    initFilters();
+    </script>
 {% endblock %}
