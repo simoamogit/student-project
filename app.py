@@ -62,38 +62,20 @@ def home():
 @app.route('/voti')
 def voti():
     dati = get_dati()
-    filtro_corrente = dati.get('filtro_voti', 'quadrimestre')
+    filtro = dati.get('filtro_visualizzazione', 'quadrimestre')
     
     voti_formattati = []
-    quadrimestre_corrente = dati['quadrimestre']
-    
     for materia, dettagli in dati['materie'].items():
-        for i, voto_data in enumerate(dettagli['voti']):
-            # Migrazione automatica per i voti vecchi
-            if isinstance(voto_data, (int, float)):
-                voto = {
-                    'valore': voto_data, 
-                    'quadrimestre': quadrimestre_corrente,
-                    'data': datetime.now().strftime("%Y-%m-%d")
-                }
-                dati['materie'][materia]['voti'][i] = voto
-                save_dati(dati)
-            else:
-                voto = voto_data
-            
-            if filtro_corrente == 'anno' or voto['quadrimestre'] == quadrimestre_corrente:
+        for i, voto in enumerate(dettagli['voti']):
+            if filtro == 'tutto' or voto['quadrimestre'] == dati['quadrimestre']:
                 voti_formattati.append({
                     'materia': materia,
                     'valore': voto['valore'],
                     'quadrimestre': voto['quadrimestre'],
-                    'indice': i,
-                    'id': f"{materia}_{i}"
+                    'indice': i
                 })
     
-    return render_template('voti.html', 
-                         dati=dati,
-                         voti=voti_formattati,
-                         filtro_corrente=filtro_corrente)
+    return render_template('voti.html', dati=dati, voti=voti_formattati)
 @app.route('/media')
 def media():
     dati = get_dati()
@@ -432,8 +414,23 @@ def reset():
 def gestione():
     return render_template('gestione/menu.html')
 
+@app.route('/api/update-view', methods=['POST'])
+def update_view():
+    try:
+        data = request.json
+        new_view = data.get('view')
+        dati = get_dati()
 
+        if str(new_view) in ['1', '2']:
+            dati['quadrimestre'] = int(new_view)
+            dati['filtro_visualizzazione'] = 'quadrimestre'
+        elif new_view == 'tutto':
+            dati['filtro_visualizzazione'] = 'tutto'
 
+        save_dati(dati)
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 # -----------------------------------------------
 # AVVIO APPLICAZIONE
 # -----------------------------------------------
