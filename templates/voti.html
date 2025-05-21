@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="grade-container">
-    <div class="grade-header bg-primary-gradient">
+    <div class="grade-header">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
             <h1 class="page-title"><i class="fas fa-clipboard-list me-3"></i>Registro Voti</h1>
             
             <div class="d-flex align-items-center gap-3">
                 <div class="filter-control">
-                    <div class="btn-group" role="group">
+                    <div class="btn-group" role="group" aria-label="Filtri periodo">
                         <button type="button" 
                                 class="btn btn-filter {% if filtro_corrente == 'quadrimestre' %}active{% endif %}"
                                 data-filtro="quadrimestre">
@@ -20,17 +20,27 @@
                         </button>
                     </div>
                 </div>
-                <button class="btn btn-danger btn-icon" id="bulkDeleteBtn" disabled>
+                <button class="btn btn-danger btn-icon" id="bulkDeleteBtn" disabled aria-label="Elimina selezionati">
                     <i class="fas fa-trash-alt"></i>
                     <span class="badge bg-white text-danger ms-2" id="selectedCount">0</span>
                 </button>
             </div>
         </div>
+        
+        <div class="search-container mt-4">
+            <div class="search-input-group">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="searchInput" class="search-input form-control" placeholder="Cerca per materia...">
+            </div>
+        </div>
+    </div>
 
     <div class="grade-list">
         {% if not voti %}
         <div class="empty-state">
-            <i class="fas fa-clipboard fa-4x mb-4"></i>
+            <div class="empty-state-icon">
+                <i class="fas fa-clipboard fa-4x mb-4"></i>
+            </div>
             <h3>Nessun voto registrato</h3>
             <p class="text-muted">Inizia aggiungendo il tuo primo voto!</p>
             <a href="{{ url_for('aggiungi_voto') }}" class="btn btn-primary btn-lg">
@@ -40,13 +50,13 @@
         {% else %}
         <div class="grade-cards">
             {% for voto in voti %}
-            <div class="grade-card">
+            <div class="grade-card" data-aos="fade-up" data-aos-delay="{{ loop.index * 50 }}">
                 <label class="grade-checkbox">
                     <input type="checkbox" 
-       class="vote-checkbox" 
-       data-id="{{ voto.materia }}|{{ voto.indice }}"
-       data-materia="{{ voto.materia }}" 
-       data-indice="{{ voto.indice }}">
+                           class="vote-checkbox" 
+                           data-id="{{ voto.materia }}|{{ voto.indice }}"
+                           data-materia="{{ voto.materia }}" 
+                           data-indice="{{ voto.indice }}">
                     <span class="checkmark"></span>
                 </label>
                 <div class="grade-content">
@@ -57,7 +67,7 @@
                         {% endif %}
                     </div>
                     <div class="grade-value-container">
-                        <div class="grade-value-badge bg-{{ 'success' if voto.valore >= 7 else 'warning' if voto.valore >= 5.5 else 'danger' }}">
+                        <div class="grade-value-badge grade-{{ 'success' if voto.valore >= 7 else 'warning' if voto.valore >= 5.5 else 'danger' }}">
                             {{ "%.2f"|format(voto.valore) }}
                             {% if voto.valore == 10 %}
                             <i class="fas fa-star medal-icon"></i>
@@ -70,14 +80,23 @@
         </div>
         {% endif %}
     </div>
+    
+    <div class="floating-action-button">
+        <a href="{{ url_for('aggiungi_voto') }}" class="btn btn-primary btn-lg btn-fab">
+            <i class="fas fa-plus"></i>
+        </a>
+    </div>
 </div>
 
 <!-- Bulk Delete Modal -->
-<div class="modal fade" id="bulkDeleteModal" tabindex="-1">
+<div class="modal fade" id="bulkDeleteModal" tabindex="-1" aria-labelledby="bulkDeleteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Conferma eliminazione</h5>
+            <div class="modal-header">
+                <h5 class="modal-title" id="bulkDeleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Conferma eliminazione
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
             </div>
             <div class="modal-body text-center">
                 <div class="delete-icon-wrapper">
@@ -85,11 +104,11 @@
                         <i class="fas fa-trash-alt"></i>
                     </div>
                 </div>
-                <h4 class="my-4">Stai per eliminare <span class="text-danger" id="modalSelectedCount">0</span> voti!</h4>
+                <h4 class="fw-bold my-4">Stai per eliminare <span class="text-danger" id="modalSelectedCount">0</span> voti!</h4>
                 <p class="text-muted">Questa azione è irreversibile. Vuoi procedere?</p>
             </div>
             <div class="modal-footer justify-content-center">
-                <button type="button" class="btn btn-lg btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-lg btn-outline-secondary" data-bs-dismiss="modal">Annulla</button>
                 <button type="button" class="btn btn-lg btn-danger" id="confirmBulkDelete">
                     <i class="fas fa-trash-alt me-2"></i>Elimina Definitivamente
                 </button>
@@ -99,77 +118,184 @@
 </div>
 
 <style>
-/* Stili Aggiornati */
-.grade-container {
-    background: #f8f9fa;
-    min-height: 100vh;
-    padding: 2rem;
+:root {
+    --primary: #4361ee;
+    --primary-dark: #3a56d4;
+    --secondary: #3f37c9;
+    --success: #4cc9f0;
+    --danger: #f72585;
+    --warning: #f8961e;
+    --info: #4895ef;
+    --light: #f8f9fa;
+    --dark: #212529;
+    --header-gradient: linear-gradient(135deg, #4361ee, #3a0ca3);
+    --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    --border-radius: 16px;
+    --card-radius: 12px;
 }
 
+/* Layout principale */
+.grade-container {
+    background-color: #f0f2f5;
+    min-height: 100vh;
+    padding: 2rem;
+    position: relative;
+}
+
+/* Header con gradiente */
 .grade-header {
-    background: linear-gradient(135deg, #3f80ff, #0048bd);
+    background: var(--header-gradient);
     color: white;
     padding: 2rem;
-    border-radius: 15px 15px 0 0;
+    border-radius: var(--border-radius);
     margin-bottom: 2rem;
+    box-shadow: var(--card-shadow);
 }
 
 .page-title {
-    font-weight: 700;
+    font-weight: 800;
     letter-spacing: -0.5px;
     margin: 0;
+    font-size: 2rem;
 }
 
+/* Barra di ricerca */
+.search-container {
+    margin-top: 1.5rem;
+}
+
+.search-input-group {
+    position: relative;
+    max-width: 500px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.6);
+    z-index: 10;
+}
+
+.search-input {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: white;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    border-radius: 12px;
+    width: 100%;
+    backdrop-filter: blur(5px);
+    transition: var(--transition);
+}
+
+.search-input:focus {
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+    outline: none;
+}
+
+.search-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Pulsanti e controlli */
 .btn-icon {
     display: flex;
     align-items: center;
     padding: 0.75rem 1.5rem;
-    border-radius: 10px;
-    transition: all 0.3s ease;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: var(--transition);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.btn-icon:hover {
+.btn-icon:hover:not([disabled]) {
     transform: translateY(-2px);
+    box-shadow: 0 7px 14px rgba(0, 0, 0, 0.15);
 }
 
-.search-input {
-    background: rgba(255,255,255,0.15);
-    border: none;
+.btn-icon:active:not([disabled]) {
+    transform: translateY(0);
+}
+
+.btn-icon[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-filter {
+    background: rgba(255, 255, 255, 0.1);
     color: white;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    margin-top: 1.5rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1.5rem;
+    font-weight: 600;
+    transition: var(--transition);
+    border-radius: 10px;
 }
 
-.search-input::placeholder {
-    color: rgba(255,255,255,0.7);
+.btn-filter.active {
+    background: white !important;
+    color: var(--primary) !important;
+    border-color: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.btn-filter:not(.active):hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Griglia di carte */
+.grade-list {
+    position: relative;
 }
 
 .grade-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 1.5rem;
 }
 
 .grade-card {
     background: white;
-    border-radius: 12px;
+    border-radius: var(--card-radius);
     padding: 1.5rem;
     display: flex;
     align-items: center;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    transition: all 0.3s ease;
-    border-left: 4px solid transparent;
+    box-shadow: var(--card-shadow);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.grade-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 4px;
+    background: var(--primary);
+    opacity: 0;
+    transition: var(--transition);
 }
 
 .grade-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.12);
 }
 
+.grade-card:hover::before {
+    opacity: 1;
+}
+
+/* Checkbox custom */
 .grade-checkbox {
     position: relative;
     margin-right: 1.5rem;
+    cursor: pointer;
 }
 
 .grade-checkbox input {
@@ -183,13 +309,13 @@
     width: 24px;
     height: 24px;
     border: 2px solid #dee2e6;
-    border-radius: 6px;
-    transition: all 0.3s ease;
+    border-radius: 8px;
+    transition: var(--transition);
 }
 
 .grade-checkbox input:checked ~ .checkmark {
-    background: #3f80ff;
-    border-color: #3f80ff;
+    background: var(--primary);
+    border-color: var(--primary);
 }
 
 .checkmark:after {
@@ -209,65 +335,112 @@
     display: block;
 }
 
+/* Contenuto della carta */
 .grade-content {
     flex-grow: 1;
 }
 
 .grade-meta {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    position: relative;
 }
 
 .grade-subject {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: var(--dark);
+}
+
+.quadrimestre-badge {
+    position: absolute;
+    top: -5px;
+    right: 0;
+    background: var(--primary);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
     font-weight: 600;
-    font-size: 1.1rem;
-    color: #2c3e50;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.grade-date {
-    font-size: 0.9rem;
-    color: #95a5a6;
-    margin-left: 0.75rem;
-}
-
+/* Badge del valore del voto */
 .grade-value-badge {
     display: inline-flex;
     align-items: center;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
+    padding: 0.5rem 1.25rem;
+    border-radius: 10px;
     font-weight: 700;
-    font-size: 1.25rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-size: 1.5rem;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    color: white;
+    transition: var(--transition);
+}
+
+.grade-success {
+    background: linear-gradient(135deg, #06d6a0, #1b9aaa);
+}
+
+.grade-warning {
+    background: linear-gradient(135deg, #ffd166, #ef8354);
+}
+
+.grade-danger {
+    background: linear-gradient(135deg, #ef476f, #bc4b51);
 }
 
 .medal-icon {
     margin-left: 0.5rem;
-    font-size: 0.8em;
+    color: #ffd700;
+    animation: shimmer 2s infinite;
 }
 
+@keyframes shimmer {
+    0% { opacity: 0.8; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+    100% { opacity: 0.8; transform: scale(1); }
+}
+
+/* Stato vuoto */
 .empty-state {
     text-align: center;
     padding: 4rem;
     background: white;
-    border-radius: 15px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    max-width: 600px;
+    margin: 2rem auto;
 }
 
+.empty-state-icon {
+    background: rgba(67, 97, 238, 0.1);
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin: 0 auto 2rem;
+    color: var(--primary);
+}
+
+/* Modal di eliminazione */
 .delete-icon-wrapper {
     position: relative;
     margin: 2rem 0;
 }
 
 .trash-icon {
-    width: 80px;
-    height: 80px;
-    background: #ffe6e6;
+    width: 100px;
+    height: 100px;
+    background: rgba(247, 37, 133, 0.1);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto;
-    color: #dc3545;
-    font-size: 2rem;
+    color: var(--danger);
+    font-size: 2.5rem;
     animation: pulse 1.5s infinite;
 }
 
@@ -277,62 +450,86 @@
     100% { transform: scale(1); }
 }
 
+.modal-content {
+    border-radius: 20px;
+    border: none;
+    overflow: hidden;
+}
+
+.modal-header {
+    background: var(--danger);
+    color: white;
+    border-bottom: none;
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    border-top: none;
+    padding: 1.5rem;
+}
+
+/* Toast di notifica */
 .toast-notification {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: 30px;
+    right: 30px;
     background: white;
     padding: 1rem 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    animation: slideIn 0.3s ease-out;
-    z-index: 1000;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    animation: slideIn 0.4s ease-out;
+    z-index: 1050;
+    min-width: 300px;
 }
 
 .toast-notification.success {
-    border-left: 4px solid #28a745;
+    border-left: 4px solid #06d6a0;
 }
 
 .toast-notification.danger {
-    border-left: 4px solid #dc3545;
+    border-left: 4px solid var(--danger);
 }
 
-.grade-card {
-    transition: all 0.3s ease, opacity 0.3s;
-}
-
-.btn-filter {
-    background: rgba(255,255,255,0.1);
-    color: white;
-    border: 2px solid rgba(255,255,255,0.3);
-    padding: 0.5rem 1.5rem;
-    transition: all 0.3s ease;
-}
-
-.btn-filter.active {
-    background: white !important;
-    color: var(--primary) !important;
-    border-color: white;
-}
-
-.btn-filter:not(.active):hover {
-    background: rgba(255,255,255,0.2);
-}
-
-.quadrimestre-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(0,0,0,0.7);
-    color: white;
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-size: 0.8em;
+.toast-content {
+    display: flex;
+    align-items: center;
 }
 
 @keyframes slideIn {
-    from { transform: translateX(100%); }
-    to { transform: translateX(0); }
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Pulsante flottante */
+.floating-action-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 1000;
+}
+
+.btn-fab {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    transition: var(--transition);
+}
+
+.btn-fab:hover {
+    transform: translateY(-5px) rotate(90deg);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .grade-cards {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
 }
 
 @media (max-width: 768px) {
@@ -340,43 +537,113 @@
         padding: 1rem;
     }
     
+    .grade-header {
+        padding: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+    }
+    
+    .btn-filter {
+        font-size: 0.9rem;
+        padding: 0.4rem 1rem;
+    }
+    
+    .floating-action-button {
+        bottom: 20px;
+        right: 20px;
+    }
+    
+    .btn-fab {
+        width: 50px;
+        height: 50px;
+    }
+}
+
+@media (max-width: 576px) {
     .grade-cards {
         grid-template-columns: 1fr;
     }
     
-    .grade-header {
-        padding: 1.5rem;
+    .grade-card {
+        padding: 1rem;
+    }
+    
+    .empty-state {
+        padding: 2rem 1rem;
     }
 }
 </style>
 
 <script>
-// Script migliorato con ricerca live e gestione delle selezioni
 document.addEventListener('DOMContentLoaded', function() {
+    // Gestione ricerca con debounce
     const searchInput = document.getElementById('searchInput');
     const gradeCards = document.querySelectorAll('.grade-card');
     
-    // Funzionalità ricerca
+    let searchTimeout;
+    
     if (searchInput) {
         searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
+            clearTimeout(searchTimeout);
             
-            gradeCards.forEach(card => {
-                const subject = card.querySelector('.grade-subject').textContent.toLowerCase();
-                card.style.display = subject.includes(searchTerm) ? 'flex' : 'none';
-            });
+            searchTimeout = setTimeout(() => {
+                const searchTerm = this.value.toLowerCase().trim();
+                
+                gradeCards.forEach(card => {
+                    const subject = card.querySelector('.grade-subject').textContent.toLowerCase();
+                    
+                    if (subject.includes(searchTerm)) {
+                        card.style.display = 'flex';
+                        card.style.opacity = '1';
+                    } else {
+                        card.style.opacity = '0';
+                        setTimeout(() => {
+                            card.style.display = 'none';
+                        }, 300);
+                    }
+                });
+                
+                // Mostra messaggio se non ci sono risultati
+                const visibleCards = document.querySelectorAll('.grade-card[style="display: flex;"]');
+                const emptyResults = document.querySelector('.empty-results');
+                
+                if (visibleCards.length === 0 && searchTerm && !emptyResults) {
+                    const emptyResults = document.createElement('div');
+                    emptyResults.className = 'empty-state empty-results';
+                    emptyResults.innerHTML = `
+                        <div class="empty-state-icon">
+                            <i class="fas fa-search fa-3x"></i>
+                        </div>
+                        <h3>Nessun risultato trovato</h3>
+                        <p class="text-muted">Prova a modificare i termini di ricerca</p>
+                    `;
+                    document.querySelector('.grade-list').appendChild(emptyResults);
+                } else if ((visibleCards.length > 0 || !searchTerm) && emptyResults) {
+                    emptyResults.remove();
+                }
+            }, 300);
         });
     }
 
-    // Nuovo sistema di gestione selezione multipla
+    // Sistema di gestione selezione multipla
     let selectedVotes = new Set();
     
-    // Delegazione eventi corretta
     document.querySelector('.grade-list').addEventListener('change', (e) => {
         const checkbox = e.target.closest('.vote-checkbox');
         if(checkbox) {
             const id = checkbox.dataset.id;
-            checkbox.checked ? selectedVotes.add(id) : selectedVotes.delete(id);
+            const card = checkbox.closest('.grade-card');
+            
+            if (checkbox.checked) {
+                selectedVotes.add(id);
+                card.classList.add('selected');
+            } else {
+                selectedVotes.delete(id);
+                card.classList.remove('selected');
+            }
+            
             updateDeleteButton(selectedVotes.size);
         }
     });
@@ -391,7 +658,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Gestione modale
     let bulkDeleteModal;
     if (document.getElementById('bulkDeleteModal')) {
-        bulkDeleteModal = new bootstrap.Modal('#bulkDeleteModal');
+        bulkDeleteModal = new bootstrap.Modal(document.getElementById('bulkDeleteModal'));
         
         document.getElementById('bulkDeleteBtn').addEventListener('click', () => {
             bulkDeleteModal.show();
@@ -418,12 +685,13 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             if (data.success) {
-                // Rimuovi le card eliminate
+                // Rimuovi le card eliminate con animazione
                 selectedVotes.forEach(id => {
                     const checkbox = document.querySelector(`.vote-checkbox[data-id="${id}"]`);
                     if (checkbox) {
                         const gradeCard = checkbox.closest('.grade-card');
                         if (gradeCard) {
+                            gradeCard.style.transform = 'translateX(100px)';
                             gradeCard.style.opacity = '0';
                             setTimeout(() => gradeCard.remove(), 300);
                         }
@@ -439,9 +707,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 showToast(`${data.count} voti eliminati con successo!`, 'success');
                 
                 // Se non ci sono più voti, ricarica
-                if (document.querySelectorAll('.grade-card').length === 0) {
-                    setTimeout(() => location.reload(), 500);
-                }
+                setTimeout(() => {
+                    if (document.querySelectorAll('.grade-card').length === 0) {
+                        location.reload();
+                    }
+                }, 500);
             } else {
                 showToast(`Errore: ${data.error}`, 'danger');
             }
@@ -452,28 +722,35 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Aggiungi questa funzione per le notifiche
+    // Funzione notifiche migliorata
     function showToast(message, type) {
         const toast = document.createElement('div');
         toast.className = `toast-notification ${type}`;
         toast.innerHTML = `
             <div class="toast-content">
                 <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i>
-                ${message}
+                <span>${message}</span>
             </div>
         `;
         
         document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
+        
+        // Aggiungi un'animazione di uscita
+        setTimeout(() => {
+            toast.style.transform = 'translateX(100%)';
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
     }
-});
-</script>
-
-<script>
+    
     // Gestione filtri
     document.querySelectorAll('.btn-filter').forEach(btn => {
         btn.addEventListener('click', function() {
             const filtro = this.dataset.filtro;
+            
+            // Aggiorna visivamente i filtri immediatamente
+            document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
             
             fetch('/api/imposta-filtro', {
                 method: 'POST',
@@ -485,9 +762,16 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    // Animazione di caricamento
+                    document.querySelector('.grade-list').style.opacity = '0.5';
+                    
                     // Ricarica solo la sezione dei voti
-                    loadVoti();
+                    setTimeout(() => loadVoti(), 300);
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Errore durante l\'impostazione del filtro', 'danger');
             });
         });
     });
@@ -500,22 +784,32 @@ document.addEventListener('DOMContentLoaded', function() {
             const newDoc = parser.parseFromString(html, 'text/html');
             const newContent = newDoc.querySelector('.grade-list').innerHTML;
             
+            // Aggiorna con animazione
             document.querySelector('.grade-list').innerHTML = newContent;
-            lazyLoadCards();
-            initFilters();
+            document.querySelector('.grade-list').style.opacity = '1';
+            
+            // Reinizializza eventi e animazioni
+            initCardAnimations();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.querySelector('.grade-list').style.opacity = '1';
+            showToast('Errore durante il caricamento dei voti', 'danger');
         });
     }
     
-    function initFilters() {
-        document.querySelectorAll('.btn-filter').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-            });
+    // Animazioni delle card
+    function initCardAnimations() {
+        document.querySelectorAll('.grade-card').forEach((card, index) => {
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 50);
         });
     }
     
-    // Inizializza al caricamento
-    initFilters();
+    // Inizializza card al caricamento
+    initCardAnimations();
+});
 </script>
 {% endblock %}
